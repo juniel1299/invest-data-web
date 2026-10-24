@@ -6,6 +6,7 @@ import 'package:http/testing.dart';
 import 'package:invest_app/api/api_client.dart';
 import 'package:invest_app/format.dart';
 import 'package:invest_app/models.dart';
+import 'package:invest_app/widgets/trade_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -92,5 +93,32 @@ void main() {
     expect(o.indices.single.isRate, true);
     expect(o.fx.series, 'FX');
     expect(o.indices.single.history, [4.0, 4.1]);
+  });
+
+  test('politician trade shows amount range and filing delay', () {
+    final t = Trade({
+      'id': 1, 'person': {'slug': 'pelosi', 'name_ko': '낸시 펠로시', 'kind': 'HOUSE', 'kind_label': '하원의원'},
+      'ticker': 'NVDA', 'name': '엔비디아', 'has_security': true, 'action': 'BUY', 'action_label': '매수',
+      'is_buy': true, 'traded_at': '2026-10-01', 'filed_at': '2026-10-20', 'delay_days': 19,
+      'amount_min': 1000001, 'amount_max': 5000000, 'owner': '배우자', 'source': 'HOUSE',
+      'source_label': '하원 거래 신고', 'url': 'https://x', 'overlap': true,
+    });
+    expect(t.who, '낸시 펠로시');
+    expect(tradeAmount(t), '\$1.0M~\$5.0M');
+    expect(tradeDates(t), '거래 10/1 · 공시 10/20 (19일 뒤)');
+  });
+
+  test('insider and 13F trades', () {
+    final insider = Trade({
+      'id': 2, 'person': null, 'actor_name': 'Cook Timothy D', 'actor_title': 'CEO', 'ticker': 'AAPL',
+      'name': '애플', 'action': 'SELL', 'action_label': '매도', 'is_buy': false, 'traded_at': null,
+      'filed_at': '2026-10-21', 'shares': 10000, 'value_usd': 2505000, 'source': 'FORM4', 'source_label': 'Form 4',
+    });
+    expect(insider.who, 'Cook Timothy D (CEO)');
+    expect(insider.kindLabel, '내부자');
+    expect(tradeAmount(insider), '10,000주 · 약 \$2.5M');
+    final f13 = Trade({...insider.j, 'source': '13F', 'shares': 4, 'value_usd': 900});
+    expect(tradeDates(f13), '분기 말 비교 · 공시 10/21');
+    expect(tradeAmount(f13), '4주 · 약 \$900');
   });
 }

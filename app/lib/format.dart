@@ -33,3 +33,8 @@ String compactUsd(double? v) {
 final _num = NumberFormat('#,##0.00');
 String number(double? v) => v == null ? '-' : _num.format(v);
 String signedNumber(double? v) => v == null ? '-' : '${v > 0 ? '+' : ''}${_num.format(v)}';
+
+final _usd0 = NumberFormat.currency(locale: 'en_US', symbol: '\$', decimalDigits: 0);
+
+/// 공시 금액용: 백만 달러 이상은 줄이고, 그 아래는 센트 없이.
+String shortUsd(double v) => v.abs() >= 1e6 ? compactUsd(v) : _usd0.format(v);

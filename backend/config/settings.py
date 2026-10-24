@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "apps.securities",
     "apps.market",
     "apps.portfolio",
+    "apps.trades",
 ]
 
 MIDDLEWARE = [
@@ -127,6 +128,24 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.market.tasks.update_calendar_task",
         "schedule": crontab(hour=6, minute=0),
     },
+    # 13F는 분기마다 몰려 나오지만 하루 한 번 확인해도 충분하다
+    "update-13f": {
+        "task": "apps.trades.tasks.update_13f_task",
+        "schedule": crontab(hour=8, minute=0),
+    },
+    # ARK는 장 마감 후 저녁에 다음 날 기준 보유 파일을 올린다
+    "update-ark": {
+        "task": "apps.trades.tasks.update_ark_task",
+        "schedule": crontab(hour=21, minute=0, day_of_week="mon-fri"),
+    },
+    "update-insiders": {
+        "task": "apps.trades.tasks.update_insiders_task",
+        "schedule": crontab(minute=20, hour="*/2"),
+    },
+    "update-congress": {
+        "task": "apps.trades.tasks.update_congress_task",
+        "schedule": crontab(minute=40, hour="7,13,19"),
+    },
     "update-fundamentals": {
         "task": "apps.market.tasks.update_fundamentals_task",
         "schedule": crontab(hour=7, minute=0, day_of_week="sun"),
@@ -142,3 +161,8 @@ TIINGO_API_KEY = env("TIINGO_API_KEY", default="")
 # 실적 발표일(Finnhub)과 배당 일정(Alpha Vantage). 둘 다 무료 키. 없으면 그 일정만 빠진다
 FINNHUB_API_KEY = env("FINNHUB_API_KEY", default="")
 ALPHA_VANTAGE_API_KEY = env("ALPHA_VANTAGE_API_KEY", default="")
+
+# 푸시 알림: ntfy (무료). 직접 띄운 ntfy 서버가 있으면 주소를 바꾼다
+NTFY_SERVER = env("NTFY_SERVER", default="https://ntfy.sh")
+# 13F의 CUSIP을 티커로 바꿀 때 쓴다. 키 없이도 되지만 무료 키가 있으면 빠르다
+OPENFIGI_API_KEY = env("OPENFIGI_API_KEY", default="")

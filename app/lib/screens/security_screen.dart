@@ -6,8 +6,11 @@ import '../models.dart';
 import '../state/app_state.dart';
 import '../widgets/news_tile.dart';
 import '../widgets/price_chart.dart';
+import '../widgets/principle_checks.dart';
+import '../widgets/trade_tile.dart';
 import 'calendar_screen.dart';
 import 'holding_screen.dart';
+import 'person_screen.dart';
 import 'transaction_form_screen.dart';
 
 const _ranges = ['1M', '3M', '6M', '1Y'];
@@ -196,6 +199,35 @@ class _SecurityScreenState extends State<SecurityScreen> {
           if (d.events.isNotEmpty) ...[
             _title(context, '다가오는 일정'),
             for (final e in d.events) CalendarTile(item: e, showDate: true),
+          ],
+          if (d.holders.isNotEmpty || d.trades.isNotEmpty) ...[
+            _title(context, '이 종목을 거래한 사람'),
+            for (final h in d.holders)
+              ListTile(
+                dense: true,
+                leading: const Icon(Icons.account_balance_wallet_outlined),
+                title: Text('${h.nameKo} 보유 · 포트폴리오의 ${h.weight?.toStringAsFixed(1) ?? '-'}%'),
+                subtitle: Text('${h.asOf} 기준 · ${h.valueUsd == null ? '-' : shortUsd(h.valueUsd!)}'
+                    '${h.change == 'NEW' ? ' · 신규 편입' : ''}'),
+                onTap: () => Navigator.push(
+                    context, MaterialPageRoute(builder: (_) => PersonScreen(slug: h.slug))),
+              ),
+            for (final t in d.trades) TradeTile(trade: t, showSecurity: false),
+          ],
+          if (d.principles != null) ...[
+            _title(context, '투자 원칙 점검'),
+            ExpansionTile(
+              title: Text('벤저민 그레이엄 ${d.principles!.score('graham')}'),
+              subtitle: const Text('PER·PBR·그레이엄 넘버·흑자·배당'),
+              childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              children: [PrincipleChecks(checks: d.principles!.graham)],
+            ),
+            ExpansionTile(
+              title: Text('피터 린치 ${d.principles!.score('lynch')}'),
+              subtitle: const Text('EPS 성장률과 PEG'),
+              childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              children: [PrincipleChecks(checks: d.principles!.lynch)],
+            ),
           ],
           _title(context, '뉴스'),
           if (d.news.isEmpty)

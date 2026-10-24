@@ -132,6 +132,7 @@ def calendar(request):
 @api_view(["GET"])
 def security_detail(request, ticker):
     from apps.portfolio.models import Watch
+    from apps.trades.views import security_trades
 
     sec = get_object_or_404(Security, ticker=ticker.upper())
     _ensure(sec, services.update_prices, sec.prices.exists())
@@ -173,6 +174,8 @@ def security_detail(request, ticker):
             "is_watched": Watch.objects.filter(user=request.user, security=sec).exists(),
             "events": [_event_json(e) for e in sec.events.filter(date__gte=today)[:5]],
             "news": [_news_json(n) for n in sec.news.select_related("security")[:5]],
+            # 이 종목을 거래·보유한 유명인과 투자 원칙 점검
+            **security_trades(sec, request.user),
         }
     )
 

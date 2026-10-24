@@ -124,6 +124,43 @@ class ApiClient {
   Future<void> unwatch(String ticker) =>
       _send('DELETE', '/api/portfolio/watches/${Uri.encodeComponent(ticker)}/');
 
+  Future<Map<String, dynamic>> updateMe(Map<String, dynamic> fields) async =>
+      Map<String, dynamic>.from(await _send('PATCH', '/api/auth/me/', body: fields));
+
+  Future<List<Trade>> tradeFeed({String scope = 'all', String? kind}) async {
+    final k = kind == null ? '' : '&kind=$kind';
+    final data = await _send('GET', '/api/trades/feed/?scope=$scope$k');
+    return [for (final j in data as List) Trade(j)];
+  }
+
+  Future<List<PersonSummary>> people() async {
+    final data = await _send('GET', '/api/trades/people/');
+    return [
+      for (final j in data as List) PersonSummary(j)..isFollowing = j['is_following'] == true,
+    ];
+  }
+
+  Future<PersonDetail> person(String slug) async =>
+      PersonDetail(await _send('GET', '/api/trades/people/$slug/'));
+
+  Future<void> follow(String slug, bool on) =>
+      _send(on ? 'POST' : 'DELETE', '/api/trades/people/$slug/follow/');
+
+  Future<(BogleResult, List<SecurityPrinciples>)> principles() async {
+    final data = await _send('GET', '/api/trades/principles/');
+    return (
+      BogleResult(data['bogle']),
+      [for (final s in data['securities'] as List) SecurityPrinciples(s)],
+    );
+  }
+
+  Future<(int, List<AppNotification>)> notifications() async {
+    final data = await _send('GET', '/api/trades/notifications/');
+    return (data['unread'] as int, [for (final n in data['items'] as List) AppNotification(n)]);
+  }
+
+  Future<void> markNotificationsRead() => _send('POST', '/api/trades/notifications/read/');
+
   Future<dynamic> _send(String method, String path,
       {Map<String, dynamic>? body, bool auth = true, bool retried = false}) async {
     final req = http.Request(method, Uri.parse('$baseUrl$path'))
