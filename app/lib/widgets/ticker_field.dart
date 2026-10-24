@@ -9,9 +9,16 @@ import '../state/app_state.dart';
 /// 티커·영문명·한글명으로 검색해 종목을 고르는 자동완성 입력란.
 /// 목록에서 고른 뒤 글자를 바꾸면 선택이 풀린다.
 class TickerField extends StatefulWidget {
-  const TickerField({super.key, required this.onSelected});
+  const TickerField({
+    super.key,
+    required this.onSelected,
+    this.label = '종목 (티커 또는 이름)',
+    this.icon,
+  });
 
   final ValueChanged<Security?> onSelected;
+  final String label;
+  final IconData? icon;
 
   @override
   State<TickerField> createState() => _TickerFieldState();
@@ -60,7 +67,11 @@ class _TickerFieldState extends State<TickerField> {
         controller: controller,
         focusNode: focus,
         textCapitalization: TextCapitalization.characters,
-        decoration: const InputDecoration(labelText: '종목 (티커 또는 이름)', hintText: '예: AAPL, 애플'),
+        decoration: InputDecoration(
+          labelText: widget.label,
+          hintText: '예: AAPL, 애플',
+          prefixIcon: widget.icon == null ? null : Icon(widget.icon),
+        ),
       ),
       optionsViewBuilder: (context, onSelect, options) => Align(
         alignment: Alignment.topLeft,

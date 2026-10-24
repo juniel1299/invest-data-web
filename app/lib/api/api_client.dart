@@ -90,6 +90,40 @@ class ApiClient {
 
   Future<void> deleteTransaction(int id) => _send('DELETE', '/api/portfolio/transactions/$id/');
 
+  Future<MarketOverview> overview() async =>
+      MarketOverview(await _send('GET', '/api/market/overview/'));
+
+  Future<List<NewsArticle>> news({String? ticker}) async {
+    final q = ticker == null ? '' : '?ticker=${Uri.encodeQueryComponent(ticker)}';
+    final data = await _send('GET', '/api/market/news/$q');
+    return [for (final j in data as List) NewsArticle(j)];
+  }
+
+  Future<List<CalendarItem>> calendar({int days = 60}) async {
+    final data = await _send('GET', '/api/market/calendar/?days=$days');
+    return [for (final j in data as List) CalendarItem(j)];
+  }
+
+  Future<SecurityDetail> securityDetail(String ticker) async =>
+      SecurityDetail(await _send('GET', '/api/securities/${Uri.encodeComponent(ticker)}/'));
+
+  Future<List<PricePoint>> prices(String ticker, {String range = '6M'}) async {
+    final data =
+        await _send('GET', '/api/securities/${Uri.encodeComponent(ticker)}/prices/?range=$range');
+    return [for (final j in data as List) PricePoint.fromJson(j)];
+  }
+
+  Future<List<Security>> watches() async {
+    final data = await _send('GET', '/api/portfolio/watches/');
+    return [for (final j in data as List) Security.fromJson({...j, 'exchange': ''})];
+  }
+
+  Future<void> watch(String ticker) =>
+      _send('POST', '/api/portfolio/watches/', body: {'ticker': ticker});
+
+  Future<void> unwatch(String ticker) =>
+      _send('DELETE', '/api/portfolio/watches/${Uri.encodeComponent(ticker)}/');
+
   Future<dynamic> _send(String method, String path,
       {Map<String, dynamic>? body, bool auth = true, bool retried = false}) async {
     final req = http.Request(method, Uri.parse('$baseUrl$path'))

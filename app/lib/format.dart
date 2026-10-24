@@ -18,3 +18,18 @@ Color pnlColor(BuildContext context, double? v) {
   if (v == null || v == 0) return Theme.of(context).colorScheme.onSurfaceVariant;
   return v > 0 ? Colors.red.shade600 : Colors.blue.shade600;
 }
+
+/// 큰 달러 금액을 조·억 대신 미국식 T/B/M으로 줄인다.
+String compactUsd(double? v) {
+  if (v == null) return '-';
+  final a = v.abs();
+  final sign = v < 0 ? '-' : '';
+  if (a >= 1e12) return '$sign\$${(a / 1e12).toStringAsFixed(2)}T';
+  if (a >= 1e9) return '$sign\$${(a / 1e9).toStringAsFixed(2)}B';
+  if (a >= 1e6) return '$sign\$${(a / 1e6).toStringAsFixed(1)}M';
+  return usd(v);
+}
+
+final _num = NumberFormat('#,##0.00');
+String number(double? v) => v == null ? '-' : _num.format(v);
+String signedNumber(double? v) => v == null ? '-' : '${v > 0 ? '+' : ''}${_num.format(v)}';

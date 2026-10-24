@@ -114,6 +114,23 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.market.tasks.update_market_data_task",
         "schedule": crontab(hour=16, minute=30, day_of_week="mon-fri"),
     },
+    # FRED는 지수 값을 장 마감 몇 시간 뒤에 올린다
+    "update-macro": {
+        "task": "apps.market.tasks.update_macro_task",
+        "schedule": crontab(hour=19, minute=0, day_of_week="mon-fri"),
+    },
+    "update-news": {
+        "task": "apps.market.tasks.update_news_task",
+        "schedule": crontab(minute=10),
+    },
+    "update-calendar": {
+        "task": "apps.market.tasks.update_calendar_task",
+        "schedule": crontab(hour=6, minute=0),
+    },
+    "update-fundamentals": {
+        "task": "apps.market.tasks.update_fundamentals_task",
+        "schedule": crontab(hour=7, minute=0, day_of_week="sun"),
+    },
 }
 
 # SEC는 요청마다 이름과 연락처가 담긴 User-Agent를 요구한다
@@ -122,3 +139,6 @@ SEC_USER_AGENT = env("SEC_USER_AGENT", default="invest-data-web dev@example.com"
 # 종가 출처: stooq(키 불필요) 또는 tiingo(무료 키 필요)
 PRICE_PROVIDER = env("PRICE_PROVIDER", default="stooq")
 TIINGO_API_KEY = env("TIINGO_API_KEY", default="")
+# 실적 발표일(Finnhub)과 배당 일정(Alpha Vantage). 둘 다 무료 키. 없으면 그 일정만 빠진다
+FINNHUB_API_KEY = env("FINNHUB_API_KEY", default="")
+ALPHA_VANTAGE_API_KEY = env("ALPHA_VANTAGE_API_KEY", default="")

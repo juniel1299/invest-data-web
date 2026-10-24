@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:invest_app/api/api_client.dart';
+import 'package:invest_app/format.dart';
 import 'package:invest_app/models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -64,5 +65,32 @@ void main() {
           ticker: 'AAPL', side: 'SELL', quantity: 1, price: 1, tradedAt: DateTime(2026))),
       throwsA(predicate((e) => e.toString().contains('보유 수량보다 많은'))),
     );
+  });
+
+  test('security detail JSON is parsed', () {
+    final d = SecurityDetail({
+      'ticker': 'AAPL', 'name': 'Apple Inc.', 'name_ko': '애플', 'price': 210.0,
+      'change': 10.0, 'market_cap': 3.2e12, 'per': 30.0, 'is_watched': true,
+      'annual': [{'year': 2025, 'revenue': 4e11, 'net_income': 1e11, 'eps': 6.5}],
+      'events': [{'date': '2026-11-02', 'kind': 'EARNINGS', 'kind_label': '실적 발표',
+        'ticker': 'AAPL', 'name': '애플', 'title': 'AAPL 실적 발표',
+        'detail': {'hour': 'amc', 'eps_estimate': 1.6}}],
+      'news': [],
+    });
+    expect(d.displayName, '애플');
+    expect(d.isWatched, true);
+    expect(d.annual.single.eps, 6.5);
+    expect(d.events.single.description, '장 마감 후 · 예상 EPS \$1.60');
+    expect(compactUsd(d.marketCap), '\$3.20T');
+  });
+
+  test('market overview keeps FX separate from indices', () {
+    final o = MarketOverview({
+      'indices': [{'series': 'DGS10', 'name': '미국 10년물 금리', 'value': 4.1, 'history': [4.0, 4.1]}],
+      'fx': {'name': '원/달러 환율', 'value': 1400.0, 'history': []},
+    });
+    expect(o.indices.single.isRate, true);
+    expect(o.fx.series, 'FX');
+    expect(o.indices.single.history, [4.0, 4.1]);
   });
 }
