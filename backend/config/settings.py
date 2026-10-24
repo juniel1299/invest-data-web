@@ -25,12 +25,16 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "corsheaders",
     "apps.accounts",
     "apps.securities",
+    "apps.market",
+    "apps.portfolio",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -91,6 +95,10 @@ REST_FRAMEWORK = {
     ],
 }
 
+# Flutter 웹은 다른 포트에서 뜨므로 API 호출을 허용한다
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
+CORS_ALLOWED_ORIGIN_REGEXES = [r"^http://(localhost|127\.0\.0\.1):\d+$"] if DEBUG else []
+
 # Celery: 미국 장 시간 기준으로 일정을 잡는다
 CELERY_BROKER_URL = env("REDIS_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
@@ -101,7 +109,16 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.securities.tasks.sync_securities_task",
         "schedule": crontab(hour=5, minute=0),
     },
+    # 장 마감(16:00) 후 종가와 환율 갱신
+    "update-market-data": {
+        "task": "apps.market.tasks.update_market_data_task",
+        "schedule": crontab(hour=16, minute=30, day_of_week="mon-fri"),
+    },
 }
 
 # SEC는 요청마다 이름과 연락처가 담긴 User-Agent를 요구한다
 SEC_USER_AGENT = env("SEC_USER_AGENT", default="invest-data-web dev@example.com")
+
+# 종가 출처: stooq(키 불필요) 또는 tiingo(무료 키 필요)
+PRICE_PROVIDER = env("PRICE_PROVIDER", default="stooq")
+TIINGO_API_KEY = env("TIINGO_API_KEY", default="")
