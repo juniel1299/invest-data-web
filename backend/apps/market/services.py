@@ -113,6 +113,15 @@ MACRO_SERIES = {
 }
 
 
+BENCHMARK_SERIES = "SP500"
+
+
+def _first_trade_date():
+    from apps.portfolio.models import Transaction
+
+    return Transaction.objects.aggregate(d=Min("traded_at"))["d"]
+
+
 def update_macro(client=None, today=None):
     today = today or date.today()
     owns = client is None
@@ -122,6 +131,18 @@ def update_macro(client=None, today=None):
         for series in MACRO_SERIES:
             last = MacroPoint.objects.filter(series=series).aggregate(d=Max("date"))["d"]
             start = last + timedelta(days=1) if last else today - timedelta(days=INITIAL_LOOKBACK_DAYS)
+            if series == BENCHMARK_SERIES:
+                # 보글 비교(같은 날 S&P 500을 샀다면)를 위해 첫 거래일까지 채운다
+                first = _first_trade_date()
+                first_saved = MacroPoint.objects.filter(series=series).aggregate(d=Min("date"))["d"]
+                if first and first_saved and first < first_saved:
+                    rows = fetch_fred_series(client, series, first)
+                    MacroPoint.objects.bulk_create(
+                        [MacroPoint(series=series, date=d, value=v) for d, v in rows if d < first_saved],
+                        ignore_conflicts=True,
+                    )
+                elif first and not first_saved:
+                    start = min(start, first)
             if start > today:
                 continue
             rows = fetch_fred_series(client, series, start)

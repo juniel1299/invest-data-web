@@ -68,6 +68,18 @@ def _pick_revenue(facts):
     return best
 
 
+def _latest_instant(facts, tag):
+    """재무상태표 항목(기간이 아닌 시점 값) 중 가장 최근 값."""
+    try:
+        rows = facts["facts"]["us-gaap"][tag]["units"]["USD"]
+    except KeyError:
+        return None
+    rows = [r for r in rows if "start" not in r and r.get("form") in ("10-K", "10-Q", "10-K/A", "10-Q/A")]
+    if not rows:
+        return None
+    return Decimal(str(max(rows, key=lambda r: (r["end"], r["filed"]))["val"]))
+
+
 def parse_company_facts(facts):
     revenue = _pick_revenue(facts)
     net_income = _dedupe(_entries(facts, "us-gaap", "NetIncomeLoss", "USD"))
@@ -101,4 +113,5 @@ def parse_company_facts(facts):
         "eps_ttm": eps_ttm,
         "annual": annual,
         "as_of": as_of or ni_as_of,
+        "equity": _latest_instant(facts, "StockholdersEquity"),
     }

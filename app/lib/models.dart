@@ -209,12 +209,18 @@ class SecurityDetail {
       : annual = [for (final a in j['annual'] as List? ?? const []) AnnualFinancials(a)],
         events = [for (final e in j['events'] as List? ?? const []) CalendarItem(e)],
         news = [for (final n in j['news'] as List? ?? const []) NewsArticle(n)],
+        trades = [for (final t in j['trades'] as List? ?? const []) Trade(t)],
+        holders = [for (final h in j['holders'] as List? ?? const []) FamousHolder(h)],
+        principles = j['principles'] == null ? null : SecurityPrinciples(j['principles']),
         isWatched = j['is_watched'] == true;
 
   final Map<String, dynamic> j;
   final List<AnnualFinancials> annual;
   final List<CalendarItem> events;
   final List<NewsArticle> news;
+  final List<Trade> trades;
+  final List<FamousHolder> holders;
+  final SecurityPrinciples? principles;
   bool isWatched;
 
   String get ticker => j['ticker'];
@@ -236,4 +242,173 @@ class SecurityDetail {
   String? get fundamentalsAsOf => j['fundamentals_as_of'];
   double? get dividendTtm => _d(j['dividend_ttm']);
   double? get dividendYield => _d(j['dividend_yield']);
+}
+
+String? _s(Object? v) => v as String?;
+
+/// 공시된 거래 한 건 (의원·투자자·내부자).
+class Trade {
+  Trade(this.j);
+
+  final Map<String, dynamic> j;
+
+  int get id => j['id'];
+  String? get personSlug => (j['person'] as Map?)?['slug'];
+  String get who {
+    final p = j['person'] as Map?;
+    if (p != null) return p['name_ko'];
+    final title = _s(j['actor_title']) ?? '';
+    return title.isEmpty ? j['actor_name'] : '${j['actor_name']} ($title)';
+  }
+
+  String? get kindLabel => (j['person'] as Map?)?['kind_label'] ?? (j['person'] == null ? '내부자' : null);
+  String get ticker => j['ticker'] ?? '';
+  String get name => j['name'] ?? '';
+  bool get hasSecurity => j['has_security'] == true;
+  String get action => j['action'];
+  String get actionLabel => j['action_label'];
+  bool get isBuy => j['is_buy'] == true;
+  DateTime? get tradedAt => j['traded_at'] == null ? null : DateTime.parse(j['traded_at']);
+  DateTime get filedAt => DateTime.parse(j['filed_at']);
+  int? get delayDays => j['delay_days'];
+  double? get amountMin => _d(j['amount_min']);
+  double? get amountMax => _d(j['amount_max']);
+  double? get shares => _d(j['shares']);
+  double? get price => _d(j['price']);
+  double? get valueUsd => _d(j['value_usd']);
+  String get owner => j['owner'] ?? '';
+  String get detail => j['detail'] ?? '';
+  String get source => j['source'];
+  String get sourceLabel => j['source_label'];
+  String get url => j['url'] ?? '';
+  bool get overlap => j['overlap'] == true;
+}
+
+class PersonSummary {
+  PersonSummary(this.j);
+
+  final Map<String, dynamic> j;
+
+  String get slug => j['slug'];
+  String get name => j['name'];
+  String get nameKo => j['name_ko'];
+  String get kind => j['kind'];
+  String get kindLabel => j['kind_label'];
+  String get title => j['title'] ?? '';
+  String get note => j['note'] ?? '';
+  bool get isCurrentPresident => j['is_current_president'] == true;
+  bool isFollowing = false;
+  String? get lastFiledAt => j['last_filed_at'];
+  int get recentTrades => j['recent_trades'] ?? 0;
+}
+
+class FamousHolding {
+  FamousHolding(this.j);
+
+  final Map<String, dynamic> j;
+
+  String get ticker => j['ticker'] ?? '';
+  String get name => j['name'] ?? '';
+  bool get hasSecurity => j['has_security'] == true;
+  double? get shares => _d(j['shares']);
+  double? get valueUsd => _d(j['value_usd']);
+  double? get weight => _d(j['weight']);
+
+  /// 직전 기록 대비 주식 수 변화(%), 새로 담았으면 'NEW', 비교할 기록이 없으면 null.
+  Object? get change => j['change_pct'];
+}
+
+class PersonDetail {
+  PersonDetail(this.j)
+      : trades = [for (final t in j['trades'] as List) Trade(t)],
+        holdings = [for (final h in j['holdings'] as List) FamousHolding(h)],
+        isFollowing = j['is_following'] == true;
+
+  final Map<String, dynamic> j;
+  final List<Trade> trades;
+  final List<FamousHolding> holdings;
+  bool isFollowing;
+
+  String get slug => j['slug'];
+  String get nameKo => j['name_ko'];
+  String get name => j['name'];
+  String get kind => j['kind'];
+  String get kindLabel => j['kind_label'];
+  String get title => j['title'] ?? '';
+  String get note => j['note'] ?? '';
+  bool get isCurrentPresident => j['is_current_president'] == true;
+  String get sourceUrl => j['source_url'] ?? '';
+  List<String> get sources => List<String>.from(j['sources'] ?? const []);
+  String? get holdingsAsOf => j['holdings_as_of'];
+  int get holdingsCount => j['holdings_count'] ?? 0;
+  List<String> get overlapTickers => List<String>.from(j['overlap']?['tickers'] ?? const []);
+  double? get overlapWeight => _d(j['overlap']?['weight']);
+  List<Map<String, dynamic>> get unparsedFilings =>
+      [for (final f in j['unparsed_filings'] as List? ?? const []) Map<String, dynamic>.from(f)];
+}
+
+/// 원칙 점검 한 줄. pass가 null이면 자료가 없어 판단하지 못한 것.
+class PrincipleCheck {
+  PrincipleCheck(this.j);
+
+  final Map<String, dynamic> j;
+
+  String get label => j['label'];
+  String get value => j['value'];
+  bool? get pass => j['pass'];
+}
+
+List<PrincipleCheck> _checks(Object? v) => [for (final c in v as List? ?? const []) PrincipleCheck(c)];
+
+class SecurityPrinciples {
+  SecurityPrinciples(this.j)
+      : graham = _checks(j['graham']),
+        lynch = _checks(j['lynch']);
+
+  final Map<String, dynamic> j;
+  final List<PrincipleCheck> graham;
+  final List<PrincipleCheck> lynch;
+
+  String get ticker => j['ticker'];
+  String get name => j['name'] ?? '';
+  bool get held => j['held'] == true;
+  String score(String key) => '${j['${key}_score']['passed']}/${j['${key}_score']['checked']}';
+}
+
+class BogleResult {
+  BogleResult(this.j) : checks = _checks(j['checks']);
+
+  final Map<String, dynamic> j;
+  final List<PrincipleCheck> checks;
+
+  double? get myValue => _d(j['my_value_usd']);
+  double? get indexValue => _d(j['index_value_usd']);
+  double? get difference => _d(j['difference_usd']);
+  int get missingIndexDays => j['missing_index_days'] ?? 0;
+}
+
+class FamousHolder {
+  FamousHolder(this.j);
+
+  final Map<String, dynamic> j;
+
+  String get slug => j['slug'];
+  String get nameKo => j['name_ko'];
+  String get asOf => j['as_of'];
+  double? get weight => _d(j['weight']);
+  double? get valueUsd => _d(j['value_usd']);
+  Object? get change => j['change_pct'];
+}
+
+class AppNotification {
+  AppNotification(this.j) : trade = Trade(j['trade']);
+
+  final Map<String, dynamic> j;
+  final Trade trade;
+
+  String get reasonLabel => j['reason_label'];
+  String get title => j['title'];
+  String get body => j['body'];
+  DateTime get createdAt => DateTime.parse(j['created_at']).toLocal();
+  bool get read => j['read'] == true;
 }

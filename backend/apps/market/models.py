@@ -51,6 +51,7 @@ class Fundamentals(models.Model):
     revenue_ttm = models.DecimalField(max_digits=20, decimal_places=2, null=True)
     net_income_ttm = models.DecimalField(max_digits=20, decimal_places=2, null=True)
     eps_ttm = models.DecimalField(max_digits=12, decimal_places=4, null=True)
+    equity = models.DecimalField("자본총계", max_digits=20, decimal_places=2, null=True)
     # [{"year": 2025, "end": "2025-09-27", "revenue": ..., "net_income": ..., "eps": ...}, ...]
     annual = models.JSONField(default=list)
     as_of = models.DateField(null=True, help_text="TTM 기준일 (가장 최근 보고 기간 끝)")
