@@ -1,0 +1,67 @@
+# 전체 실행: docker compose up --build
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: invest
+      POSTGRES_USER: invest
+      POSTGRES_PASSWORD: invest
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U invest"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+
+  web:
+    build: ./backend
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgres://invest:invest@db:5432/invest
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    build: ./backend
+    command: celery -A config worker -l info
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgres://invest:invest@db:5432/invest
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - web
+
+  beat:
+    build: ./backend
+    command: celery -A config beat -l info --schedule /tmp/celerybeat-schedule
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgres://invest:invest@db:5432/invest
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+
+volumes:
+  pgdata:
