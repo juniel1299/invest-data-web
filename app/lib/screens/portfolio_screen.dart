@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../format.dart';
 import '../models.dart';
 import '../state/app_state.dart';
-import 'holding_screen.dart';
+import 'security_screen.dart';
 import 'transaction_form_screen.dart';
 
 class PortfolioScreen extends StatefulWidget {
@@ -74,7 +74,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                   _HoldingTile(
                     holding: h,
                     krwMode: krwMode,
-                    onTap: () => _open(HoldingScreen(ticker: h.ticker, name: h.name)),
+                    onTap: () => _open(SecurityScreen(ticker: h.ticker)),
                   ),
               ],
             ),

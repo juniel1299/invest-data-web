@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'api/api_client.dart';
 import 'screens/login_screen.dart';
-import 'screens/portfolio_screen.dart';
+import 'screens/home_screen.dart';
 import 'state/app_state.dart';
 
 Future<void> main() async {
@@ -31,7 +31,7 @@ class InvestApp extends StatelessWidget {
       locale: const Locale('ko', 'KR'),
       supportedLocales: const [Locale('ko', 'KR')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      home: loggedIn ? const PortfolioScreen() : const LoginScreen(),
+      home: loggedIn ? const HomeScreen() : const LoginScreen(),
     );
   }
 }

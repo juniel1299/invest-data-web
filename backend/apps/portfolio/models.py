@@ -47,3 +47,15 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.traded_at} {self.get_side_display()} {self.security.ticker} {self.quantity}"
+
+
+class Watch(models.Model):
+    """관심 종목. 보유하지 않아도 시세·뉴스·일정을 받아온다."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="watches")
+    security = models.ForeignKey(Security, on_delete=models.CASCADE, related_name="watchers")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "security"], name="uniq_watch")]
+        ordering = ["created_at"]

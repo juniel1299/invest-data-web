@@ -1,13 +1,27 @@
 from django.core.management.base import BaseCommand
 
-from apps.market.tasks import update_market_data_task
+from apps.market import tasks
 
 
 class Command(BaseCommand):
-    help = "환율과 보유 종목 종가를 지금 바로 갱신합니다."
+    help = "시세·환율·지표·재무·뉴스·일정을 지금 바로 갱신합니다."
 
-    def handle(self, *args, **options):
-        result = update_market_data_task()
-        self.stdout.write(self.style.SUCCESS(f"환율 {result['fx']}건, 종가 {result['prices']}"))
-        if result["errors"]:
-            self.stdout.write(self.style.WARNING(f"실패: {result['errors']}"))
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--only",
+            choices=["prices", "macro", "fundamentals", "news", "calendar"],
+            help="하나만 갱신",
+        )
+
+    def handle(self, *args, only=None, **options):
+        jobs = {
+            "prices": tasks.update_market_data_task,
+            "macro": tasks.update_macro_task,
+            "fundamentals": tasks.update_fundamentals_task,
+            "news": tasks.update_news_task,
+            "calendar": tasks.update_calendar_task,
+        }
+        for name, job in jobs.items():
+            if only and name != only:
+                continue
+            self.stdout.write(f"{name}: {job()}")
