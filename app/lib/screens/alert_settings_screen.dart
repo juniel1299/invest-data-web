@@ -64,6 +64,9 @@ class _AlertSettingsScreenState extends State<AlertSettingsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               children: [
+                _switch('daily_email', '장 마감 요약 이메일',
+                    '거래일마다 미국 동부 17:00(한국 아침 6~7시)에 ${_me!['email']}로 보내요'),
+                const Divider(height: 32),
                 _switch('notify_overlap', '내 종목을 누가 거래하면', '보유·관심 종목을 추적 인물이 사고팔았을 때'),
                 _switch('notify_follow', '팔로우한 인물의 새 거래', '팔로우한 인물의 모든 새 공시'),
                 _switch('notify_insider', '내부자 대량 매매', '보유·관심 종목 임원·대주주의 100만 달러 이상 매매'),

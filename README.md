@@ -67,9 +67,11 @@ python manage.py runserver
 | GET | `/api/trades/notifications/` | 알림함 (읽지 않은 수 포함) |
 | POST | `/api/trades/notifications/read/` | 모두 읽음 |
 | GET | `/api/trades/principles/` | 그레이엄·린치 기준 종목 점검, 보글식 S&P 500 비교 |
+| GET | `/api/digest/` | 지난 장 마감 요약 목록 (날짜, 내 포트폴리오 등락, 공시·뉴스 수) |
+| GET | `/api/digest/<YYYY-MM-DD>/`, `/api/digest/latest/` | 그날 요약 (이메일과 같은 내용) |
 
 종목 상세(`/api/securities/<ticker>/`)에는 이 종목을 거래·보유한 인물과 원칙 점검도 함께 들어 있습니다.
-알림 설정(`ntfy_topic`, `notify_follow`, `notify_overlap`, `notify_insider`)은 `/api/auth/me/`에서 바꿉니다.
+알림 설정(`daily_email`, `ntfy_topic`, `notify_follow`, `notify_overlap`, `notify_insider`)은 `/api/auth/me/`에서 바꿉니다.
 
 보유 현황은 거래 내역에서 이동평균법으로 계산합니다. 보유 현황만 넣고 싶으면 평균 단가로 매수 한 건을 넣으면 됩니다.
 환율을 비워두면 거래일의 ECB 기준환율을 씁니다.
@@ -112,8 +114,30 @@ Celery Beat가 미국 동부 시간 기준으로 실행합니다.
 | `update_ark_task` | 평일 21:00 ET | ARK ETF 일간 보유 변화 |
 | `update_insiders_task` | 2시간마다 | 보유·관심 종목 내부자 Form 4 |
 | `update_congress_task` | 매일 07:40, 13:40, 19:40 ET | 하원 PTR, 상원 eFD |
+| `send_daily_summaries_task` | 거래일 17:00 ET (조기 마감일 14:00) | 장 마감 요약을 만들고 이메일 발송. 휴장일은 건너뜀 |
 
 새 거래가 들어오면 최근 3일 안에 공시된 것만 알립니다. 팔로우한 인물의 거래, 내 보유·관심 종목을 추적 인물이 거래한 경우, 보유·관심 종목 내부자의 100만 달러 이상 매매가 대상입니다.
+
+### 장 마감 요약 이메일
+
+거래일마다 내 포트폴리오 등락, 많이 오르고 내린 종목, 지수·금리·환율, 그날 공시된 매매(내 종목과 겹치는 것 먼저), 내 종목 뉴스, 다음 거래일 일정을 한 통으로 보냅니다.
+뉴욕증시 휴장일과 조기 마감일은 `apps/market/calendar_us.py`가 규칙으로 계산합니다. 임시 휴장(국장 등)은 그 파일의 `EXTRA_CLOSED`에 날짜를 넣으세요.
+같은 내용이 앱 포트폴리오 화면 위쪽 '오늘의 정리'에도 쌓이고, 받기 싫으면 앱의 알림 설정에서 끕니다.
+
+Gmail로 보내려면 Google 계정에서 2단계 인증을 켜고 [앱 비밀번호](https://myaccount.google.com/apppasswords)를 만든 뒤 `.env`에 넣습니다 (무료, 하루 500통).
+
+```bash
+EMAIL_URL=smtp+tls://you%40gmail.com:앱비밀번호16자리@smtp.gmail.com:587
+DEFAULT_FROM_EMAIL=미국 주식 모음 <you@gmail.com>
+APP_URL=http://localhost:8080
+```
+
+`EMAIL_URL`을 비워두면 메일을 보내지 않고 터미널(web·worker 로그)에 출력합니다. 앱 비밀번호의 공백은 빼고 붙여 쓰세요.
+
+```bash
+docker compose exec web python manage.py send_daily_summary --user you@gmail.com --force  # 지금 한 통 보내 보기
+docker compose exec web python manage.py send_daily_summary --date 2026-10-23 --no-email  # 그날 요약만 만들기
+```
 
 ### 추적 인물 바꾸기
 

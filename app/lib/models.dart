@@ -412,3 +412,40 @@ class AppNotification {
   DateTime get createdAt => DateTime.parse(j['created_at']).toLocal();
   bool get read => j['read'] == true;
 }
+
+/// '오늘의 정리' 목록 한 줄.
+class DigestBrief {
+  DigestBrief(this.j);
+
+  final Map<String, dynamic> j;
+
+  DateTime get date => DateTime.parse(j['date']);
+  bool get earlyClose => j['early_close'] == true;
+  double? get changePct => _d(j['change_pct']);
+  double? get changeUsd => _d(j['change_usd']);
+  int get tradeTotal => j['trade_total'] ?? 0;
+  int get newsCount => j['news_count'] ?? 0;
+  bool get emailed => j['emailed'] == true;
+}
+
+/// 장 마감 요약 (이메일과 같은 내용).
+class Digest {
+  Digest(this.j);
+
+  final Map<String, dynamic> j;
+
+  DateTime get date => DateTime.parse(j['date']);
+  bool get earlyClose => j['early_close'] == true;
+  Map<String, dynamic>? get portfolio => j['portfolio'] == null ? null : Map<String, dynamic>.from(j['portfolio']);
+  double? p(String key) => _d(portfolio?[key]);
+  List<Map<String, dynamic>> _list(Object? v) => [for (final m in (v as List? ?? [])) Map<String, dynamic>.from(m)];
+  List<Map<String, dynamic>> get up => _list(j['movers']?['up']);
+  List<Map<String, dynamic>> get down => _list(j['movers']?['down']);
+  List<Map<String, dynamic>> get market => _list(j['market']);
+  List<Trade> get trades => [for (final t in _list(j['trades'])) Trade(t)];
+  int get tradeTotal => j['trade_total'] ?? 0;
+  List<Map<String, dynamic>> get news => _list(j['news']);
+  DateTime get nextTradingDay => DateTime.parse(j['next_trading_day']);
+  List<Map<String, dynamic>> get tomorrow => _list(j['tomorrow']);
+  bool get emailed => j['emailed_at'] != null;
+}

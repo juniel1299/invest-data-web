@@ -161,6 +161,13 @@ class ApiClient {
 
   Future<void> markNotificationsRead() => _send('POST', '/api/trades/notifications/read/');
 
+  Future<List<DigestBrief>> digests() async {
+    final data = await _send('GET', '/api/digest/');
+    return [for (final j in data as List) DigestBrief(j)];
+  }
+
+  Future<Digest> digest(String date) async => Digest(await _send('GET', '/api/digest/$date/'));
+
   Future<dynamic> _send(String method, String path,
       {Map<String, dynamic>? body, bool auth = true, bool retried = false}) async {
     final req = http.Request(method, Uri.parse('$baseUrl$path'))

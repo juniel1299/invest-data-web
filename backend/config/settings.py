@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.humanize",
     "rest_framework",
     "corsheaders",
     "apps.accounts",
@@ -31,6 +32,7 @@ INSTALLED_APPS = [
     "apps.market",
     "apps.portfolio",
     "apps.trades",
+    "apps.digest",
 ]
 
 MIDDLEWARE = [
@@ -146,6 +148,17 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.trades.tasks.update_congress_task",
         "schedule": crontab(minute=40, hour="7,13,19"),
     },
+    # 장 마감 요약 이메일: 평소 17:00, 조기 마감일(13:00 마감)은 14:00. 휴장일은 작업 안에서 건너뛴다
+    "send-daily-summary": {
+        "task": "apps.digest.tasks.send_daily_summaries_task",
+        "schedule": crontab(hour=17, minute=0, day_of_week="mon-fri"),
+        "kwargs": {"kind": "regular"},
+    },
+    "send-daily-summary-early": {
+        "task": "apps.digest.tasks.send_daily_summaries_task",
+        "schedule": crontab(hour=14, minute=0, day_of_week="mon-fri"),
+        "kwargs": {"kind": "early"},
+    },
     "update-fundamentals": {
         "task": "apps.market.tasks.update_fundamentals_task",
         "schedule": crontab(hour=7, minute=0, day_of_week="sun"),
@@ -166,3 +179,10 @@ ALPHA_VANTAGE_API_KEY = env("ALPHA_VANTAGE_API_KEY", default="")
 NTFY_SERVER = env("NTFY_SERVER", default="https://ntfy.sh")
 # 13F의 CUSIP을 티커로 바꿀 때 쓴다. 키 없이도 되지만 무료 키가 있으면 빠르다
 OPENFIGI_API_KEY = env("OPENFIGI_API_KEY", default="")
+
+# 이메일: 기본은 콘솔 출력. Gmail은 앱 비밀번호로 smtp+tls://아이디%40gmail.com:앱비밀번호@smtp.gmail.com:587
+EMAIL_CONFIG = env.email_url_config(env("EMAIL_URL", default="") or "consolemail://")
+vars().update(EMAIL_CONFIG)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="") or "미국 주식 모음 <noreply@localhost>"
+# 이메일 속 '앱 열기' 링크
+APP_URL = env("APP_URL", default="") or "http://localhost:8080"

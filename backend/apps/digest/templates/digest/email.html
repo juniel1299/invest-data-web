@@ -1,0 +1,62 @@
+{% load humanize %}<!doctype html>
+<html lang="ko"><body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#1c1b1f">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:16px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px">
+<tr><td style="padding:20px 20px 8px">
+  <div style="font-size:13px;color:#6b6b76">미국 주식 모음</div>
+  <div style="font-size:20px;font-weight:700">{{ day }} 마감 요약{% if d.early_close %} <span style="font-size:13px;color:#b35c00">조기 마감</span>{% endif %}</div>
+</td></tr>
+{% if p %}
+<tr><td style="padding:12px 20px">
+  <div style="font-size:13px;color:#6b6b76">내 포트폴리오</div>
+  <div style="font-size:24px;font-weight:700">${{ p.value_usd|floatformat:2|intcomma }}</div>
+  {% if p.value_krw %}<div style="font-size:13px;color:#6b6b76">₩{{ p.value_krw|floatformat:0|intcomma }}</div>{% endif %}
+  <div style="font-size:15px;margin-top:4px;color:{% if p.change_usd > 0 %}#d32f2f{% elif p.change_usd < 0 %}#1e63d6{% else %}#6b6b76{% endif %}">오늘 {{ p_change }}{% if p_change_krw %} · {{ p_change_krw }}{% endif %}</div>
+  <div style="font-size:13px;color:#6b6b76;margin-top:2px">총 수익률 {{ pnl_text }}{% if pnl_krw_text %} · 원화 {{ pnl_krw_text }}{% endif %}{% if p.fx %} · 환율 ₩{{ p.fx|floatformat:2|intcomma }}{% endif %}</div>
+  {% if d.movers.up or d.movers.down %}
+  <table role="presentation" width="100%" style="margin-top:10px;font-size:14px">
+    {% for m in d.movers.up %}<tr><td>{{ m.ticker }} <span style="color:#6b6b76">{{ m.name }}</span></td><td align="right" style="color:#d32f2f">+{{ m.change_pct }}%</td></tr>{% endfor %}
+    {% for m in d.movers.down %}<tr><td>{{ m.ticker }} <span style="color:#6b6b76">{{ m.name }}</span></td><td align="right" style="color:#1e63d6">{{ m.change_pct }}%</td></tr>{% endfor %}
+  </table>
+  {% endif %}
+</td></tr>
+{% endif %}
+<tr><td style="padding:12px 20px">
+  <div style="font-size:15px;font-weight:700;margin-bottom:6px">시장</div>
+  <table role="presentation" width="100%" style="font-size:14px">
+  {% for m in market %}<tr>
+    <td style="padding:3px 0">{{ m.name }}</td>
+    <td align="right">{{ m.value|floatformat:2|intcomma }}</td>
+    <td align="right" style="padding-left:8px;color:{% if m.change > 0 %}#d32f2f{% elif m.change < 0 %}#1e63d6{% else %}#6b6b76{% endif %}">{{ m.change_text }}</td>
+  </tr>{% endfor %}
+  </table>
+  <div style="font-size:12px;color:#8a8a94;margin-top:4px">지수는 FRED 기준이라 하루 늦게 반영될 수 있어요.</div>
+</td></tr>
+<tr><td style="padding:12px 20px">
+  <div style="font-size:15px;font-weight:700;margin-bottom:6px">오늘 공시된 매매</div>
+  {% if not d.trades %}<div style="font-size:14px;color:#6b6b76">새로 공시된 거래가 없어요.</div>{% endif %}
+  {% for t in d.trades %}
+  <div style="padding:6px 0;border-bottom:1px solid #eee;font-size:14px">
+    <span style="color:{% if t.is_buy %}#d32f2f{% else %}#1e63d6{% endif %};font-weight:600">{{ t.action_label }}</span>
+    {% if t.person %}{{ t.person.name_ko }}{% else %}{{ t.actor_name }}{% endif %} · <b>{{ t.ticker }}</b> {{ t.name }}
+    {% if t.overlap %}<span style="font-size:11px;background:#e8e6ff;border-radius:4px;padding:1px 5px">내 종목</span>{% endif %}
+    <div style="font-size:12px;color:#6b6b76">{% if t.amount_min %}${{ t.amount_min|floatformat:0|intcomma }}{% if t.amount_max %}~${{ t.amount_max|floatformat:0|intcomma }}{% else %} 이상{% endif %}{% elif t.shares %}{{ t.shares|floatformat:0|intcomma }}주{% endif %}{% if t.traded_at %} · 거래일 {{ t.traded_at }}{% endif %} · 공시일 {{ t.filed_at }}{% if t.url %} · <a href="{{ t.url }}" style="color:#4a4ac9">원문</a>{% endif %}</div>
+  </div>
+  {% endfor %}
+  {% if d.trade_total > d.trades|length %}<div style="font-size:12px;color:#8a8a94;margin-top:4px">전체 {{ d.trade_total }}건 중 {{ d.trades|length }}건만 보여드려요.</div>{% endif %}
+</td></tr>
+{% if d.news %}
+<tr><td style="padding:12px 20px">
+  <div style="font-size:15px;font-weight:700;margin-bottom:6px">내 종목 뉴스</div>
+  {% for n in d.news %}<div style="padding:4px 0;font-size:14px"><span style="color:#6b6b76">{{ n.ticker }}</span> <a href="{{ n.url }}" style="color:#1c1b1f">{{ n.title }}</a>{% if n.source %} <span style="font-size:12px;color:#8a8a94">{{ n.source }}</span>{% endif %}</div>{% endfor %}
+</td></tr>
+{% endif %}
+<tr><td style="padding:12px 20px 20px">
+  <div style="font-size:15px;font-weight:700;margin-bottom:6px">{{ next_day }} 일정</div>
+  {% if not d.tomorrow %}<div style="font-size:14px;color:#6b6b76">잡힌 일정이 없어요.</div>{% endif %}
+  {% for e in d.tomorrow %}<div style="font-size:14px;padding:2px 0">{% if e.ticker %}<b>{{ e.ticker }}</b> {% endif %}{{ e.kind_label }}</div>{% endfor %}
+</td></tr>
+</table>
+<div style="font-size:12px;color:#8a8a94;padding:12px">거래일마다 미국 동부 17:00에 보내요. 앱의 알림 설정에서 끌 수 있어요.{% if app_url %} <a href="{{ app_url }}" style="color:#8a8a94">앱 열기</a>{% endif %}</div>
+</td></tr></table>
+</body></html>
