@@ -25,7 +25,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
     _load();
   }
 
-  void _load() => setState(() => _future = context.read<AppState>().api.calendar(days: 60));
+  void _load() => setState(() {
+        _future = context.read<AppState>().api.calendar(days: 60);
+      });
 
   @override
   Widget build(BuildContext context) {
