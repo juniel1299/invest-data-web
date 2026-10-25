@@ -98,9 +98,9 @@ REST_FRAMEWORK = {
     ],
 }
 
-# Flutter 웹은 다른 포트에서 뜨므로 API 호출을 허용한다
+# Flutter 웹(flutter run)은 매번 다른 포트에서 뜨므로 내 PC(localhost)에서 오는 호출은 항상 허용한다
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
-CORS_ALLOWED_ORIGIN_REGEXES = [r"^http://(localhost|127\.0\.0\.1):\d+$"] if DEBUG else []
+CORS_ALLOWED_ORIGIN_REGEXES = [r"^http://(localhost|127\.0\.0\.1)(:\d+)?$"]
 
 # Celery: 미국 장 시간 기준으로 일정을 잡는다
 CELERY_BROKER_URL = env("REDIS_URL", default="redis://localhost:6379/0")
