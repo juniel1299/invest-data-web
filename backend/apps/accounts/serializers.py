@@ -31,6 +31,7 @@ class UserSerializer(serializers.ModelSerializer):
             "notify_follow",
             "notify_overlap",
             "notify_insider",
+            "daily_email",
             "date_joined",
         ]
         read_only_fields = ["id", "email", "date_joined"]

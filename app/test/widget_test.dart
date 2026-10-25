@@ -121,4 +121,20 @@ void main() {
     expect(tradeDates(f13), '분기 말 비교 · 공시 10/21');
     expect(tradeAmount(f13), '4주 · 약 \$900');
   });
+
+  test('digest JSON is parsed', () {
+    final d = Digest({
+      'date': '2026-10-23', 'early_close': false,
+      'portfolio': {'value_usd': 3240.0, 'change_usd': 40.0, 'change_pct': 1.25, 'change_krw': 56000},
+      'movers': {'up': [{'ticker': 'AAPL', 'name': '애플', 'change_pct': 5.0}], 'down': []},
+      'market': [{'series': 'SP500', 'name': 'S&P 500', 'value': 6060.0, 'change_pct': 1.0, 'date': '2026-10-23'}],
+      'trades': [], 'trade_total': 0, 'news': [], 'next_trading_day': '2026-10-26', 'tomorrow': [],
+      'emailed_at': null,
+    });
+    expect(d.p('change_usd'), 40.0);
+    expect(d.up.single['ticker'], 'AAPL');
+    expect(d.nextTradingDay, DateTime(2026, 10, 26));
+    expect(d.emailed, isFalse);
+    expect(Digest({...d.j, 'portfolio': null}).p('value_usd'), isNull);
+  });
 }

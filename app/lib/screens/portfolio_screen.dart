@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../format.dart';
 import '../models.dart';
 import '../state/app_state.dart';
+import 'digest_screen.dart';
 import 'security_screen.dart';
 import 'transaction_form_screen.dart';
 
@@ -38,6 +39,11 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
         title: const Text('내 포트폴리오'),
         actions: [
           TextButton(onPressed: state.toggleCurrency, child: Text(state.currency)),
+          IconButton(
+            onPressed: () => _open(const DigestListScreen()),
+            icon: const Icon(Icons.summarize_outlined),
+            tooltip: '오늘의 정리',
+          ),
           IconButton(onPressed: _load, icon: const Icon(Icons.refresh), tooltip: '새로고침'),
           IconButton(onPressed: state.logout, icon: const Icon(Icons.logout), tooltip: '로그아웃'),
         ],

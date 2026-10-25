@@ -41,6 +41,7 @@ class User(AbstractUser):
     notify_follow = models.BooleanField("팔로우한 인물의 새 거래", default=True)
     notify_overlap = models.BooleanField("내 보유·관심 종목을 누가 거래", default=True)
     notify_insider = models.BooleanField("보유 종목 내부자 대량 매매", default=True)
+    daily_email = models.BooleanField("장 마감 요약 이메일", default=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

@@ -1,0 +1,28 @@
+{% autoescape off %}{{ day }} 미국 증시 마감 요약{% if d.early_close %} (조기 마감){% endif %}
+{% if p %}
+[내 포트폴리오]
+평가금액 ${{ p.value_usd|floatformat:"2g" }}{% if p.value_krw %} / ₩{{ p.value_krw|floatformat:"0g" }}{% endif %}
+오늘 {{ p_change }}{% if p_change_krw %} / {{ p_change_krw }}{% endif %}
+총 수익률 {{ pnl_text }}{% if pnl_krw_text %} (원화 {{ pnl_krw_text }}){% endif %}
+{% if d.movers.up %}오른 종목: {% for m in d.movers.up %}{{ m.ticker }} +{{ m.change_pct }}%{% if not forloop.last %}, {% endif %}{% endfor %}
+{% endif %}{% if d.movers.down %}내린 종목: {% for m in d.movers.down %}{{ m.ticker }} {{ m.change_pct }}%{% if not forloop.last %}, {% endif %}{% endfor %}
+{% endif %}{% endif %}
+[시장]
+{% for m in market %}{{ m.name }} {{ m.value|floatformat:"2g" }} {{ m.change_text }} ({{ m.date }} 기준)
+{% endfor %}
+[오늘 공시된 매매]{% if not d.trades %}
+없음{% endif %}
+{% for t in d.trades %}{% if t.overlap %}★ {% endif %}{% if t.person %}{{ t.person.name_ko }}{% else %}{{ t.actor_name }}{% endif %} · {{ t.ticker }} {{ t.action_label }}{% if t.traded_at %} (거래일 {{ t.traded_at }}){% endif %}
+{% endfor %}{% if d.trade_total > d.trades|length %}총 {{ d.trade_total }}건 중 {{ d.trades|length }}건만 표시
+{% endif %}
+{% if d.news %}[내 종목 뉴스]
+{% for n in d.news %}{{ n.ticker }} · {{ n.title }}
+{{ n.url }}
+{% endfor %}{% endif %}
+[{{ next_day }} 일정]{% if not d.tomorrow %}
+없음{% endif %}
+{% for e in d.tomorrow %}{% if e.ticker %}{{ e.ticker }} {% endif %}{{ e.kind_label }}
+{% endfor %}
+★ 표시는 내 보유·관심 종목과 겹치는 거래입니다.
+{% if app_url %}앱에서 보기: {{ app_url }}{% endif %}
+{% endautoescape %}
