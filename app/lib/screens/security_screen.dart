@@ -8,6 +8,7 @@ import '../widgets/news_tile.dart';
 import '../widgets/price_chart.dart';
 import '../widgets/principle_checks.dart';
 import '../widgets/trade_tile.dart';
+import '../widgets/load_error.dart';
 import 'calendar_screen.dart';
 import 'holding_screen.dart';
 import 'person_screen.dart';
@@ -99,7 +100,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
           body: switch (snap) {
             AsyncSnapshot(connectionState: != ConnectionState.done) =>
               const Center(child: CircularProgressIndicator()),
-            AsyncSnapshot(:final error?) => Center(child: Text('불러오지 못했습니다: $error')),
+            AsyncSnapshot(:final error?) => LoadError(error: error, onRetry: _load),
             _ => _body(context, d!),
           },
         );
@@ -147,7 +148,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 builder: (context, snap) => snap.hasData
                     ? PriceChart(points: snap.data!)
                     : snap.hasError
-                        ? Center(child: Text('차트를 불러오지 못했습니다: ${snap.error}'))
+                        ? LoadError(error: snap.error!, onRetry: () => _setRange(_range), what: '차트를 불러오지')
                         : const Center(child: CircularProgressIndicator()),
               ),
             ),

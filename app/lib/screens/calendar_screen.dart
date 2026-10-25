@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../models.dart';
 import '../state/app_state.dart';
+import '../widgets/load_error.dart';
 import 'security_screen.dart';
 
 final _dayHeader = DateFormat('M월 d일 (E)', 'ko');
@@ -42,7 +43,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           if (snap.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snap.hasError) return Center(child: Text('불러오지 못했습니다: ${snap.error}'));
+          if (snap.hasError) return LoadError(error: snap.error!, onRetry: _load);
           final items = snap.data!;
           if (items.isEmpty) {
             return const Center(

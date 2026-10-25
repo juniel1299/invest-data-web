@@ -30,6 +30,34 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   late final _memo = TextEditingController(text: widget.initial?.memo ?? '');
   bool _busy = false;
   String? _error;
+  // 단가 칸 옆에 보여줄 최근 종가
+  double? _lastClose;
+  String? _lastCloseDate;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_ticker != null && widget.initial == null) _loadQuote(_ticker!);
+  }
+
+  void _onTicker(Security? s) {
+    _ticker = s?.ticker;
+    setState(() => _lastClose = null);
+    if (s != null) _loadQuote(s.ticker);
+  }
+
+  Future<void> _loadQuote(String ticker) async {
+    try {
+      final d = await context.read<AppState>().api.securityDetail(ticker);
+      if (!mounted || _ticker != ticker || d.price == null) return;
+      setState(() {
+        _lastClose = d.price;
+        _lastCloseDate = d.priceDate;
+      });
+    } catch (_) {
+      // 종가는 참고용이라 못 받아도 입력은 계속할 수 있다
+    }
+  }
 
   static String _num(double? v) =>
       v == null ? '' : v.toString().replaceFirst(RegExp(r'\.0+$'), '');
@@ -94,7 +122,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             if (widget.ticker == null && !editing)
-              TickerField(onSelected: (s) => _ticker = s?.ticker)
+              TickerField(autoSelectExact: true, onSelected: _onTicker)
             else
               InputDecorator(
                 decoration: const InputDecoration(labelText: '종목'),
@@ -118,8 +146,17 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             ),
             TextFormField(
               controller: _price,
-              decoration: const InputDecoration(
-                  labelText: '단가 (USD)', hintText: '보유 현황만 넣을 땐 평균 단가'),
+              decoration: InputDecoration(
+                labelText: '단가 (USD)',
+                hintText: '보유 현황만 넣을 땐 평균 단가',
+                helperText: _lastClose == null ? null : '최근 종가 ${usd(_lastClose)} ($_lastCloseDate)',
+                suffixIcon: _lastClose == null
+                    ? null
+                    : TextButton(
+                        onPressed: () => _price.text = _num(_lastClose),
+                        child: const Text('종가 넣기'),
+                      ),
+              ),
               keyboardType: numberKeyboard,
               validator: _positive,
             ),

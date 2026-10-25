@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../format.dart';
 import '../models.dart';
 import '../state/app_state.dart';
+import '../widgets/load_error.dart';
 import 'digest_screen.dart';
 import 'security_screen.dart';
 import 'transaction_form_screen.dart';
@@ -62,7 +63,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snap.hasError) {
-            return Center(child: Text('불러오지 못했습니다: ${snap.error}'));
+            return LoadError(error: snap.error!, onRetry: _load);
           }
           final s = snap.data!;
           final krwMode = state.currency == 'KRW';

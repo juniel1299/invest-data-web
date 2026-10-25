@@ -6,6 +6,7 @@ import '../models.dart';
 import '../state/app_state.dart';
 import '../widgets/principle_checks.dart';
 import '../widgets/trade_tile.dart';
+import '../widgets/load_error.dart';
 import 'alert_settings_screen.dart';
 import 'notifications_screen.dart';
 import 'person_screen.dart';
@@ -151,7 +152,7 @@ class _FeedState extends State<_Feed> with AutomaticKeepAliveClientMixin {
               if (snap.connectionState != ConnectionState.done) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (snap.hasError) return Center(child: Text('불러오지 못했습니다: ${snap.error}'));
+              if (snap.hasError) return LoadError(error: snap.error!, onRetry: _load);
               final items = snap.data!;
               if (items.isEmpty) {
                 return Center(
@@ -226,7 +227,7 @@ class _PeopleState extends State<_People> with AutomaticKeepAliveClientMixin {
         if (snap.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (snap.hasError) return Center(child: Text('불러오지 못했습니다: ${snap.error}'));
+        if (snap.hasError) return LoadError(error: snap.error!, onRetry: _load);
         // 원칙 점검 인물은 '원칙 점검' 탭에서 다룬다
         final people = snap.data!.where((p) => p.kind != 'PRINCIPLE').toList();
         final groups = <String, List<PersonSummary>>{};
@@ -285,8 +286,12 @@ class _PrinciplesState extends State<_Principles> with AutomaticKeepAliveClientM
   @override
   void initState() {
     super.initState();
-    _future = context.read<AppState>().api.principles();
+    _load();
   }
+
+  void _load() => setState(() {
+        _future = context.read<AppState>().api.principles();
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -298,7 +303,7 @@ class _PrinciplesState extends State<_Principles> with AutomaticKeepAliveClientM
         if (snap.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (snap.hasError) return Center(child: Text('불러오지 못했습니다: ${snap.error}'));
+        if (snap.hasError) return LoadError(error: snap.error!, onRetry: _load);
         final (bogle, secs) = snap.data!;
         return ListView(
           padding: const EdgeInsets.only(bottom: 24),

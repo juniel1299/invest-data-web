@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../state/app_state.dart';
 
 import 'calendar_screen.dart';
 import 'market_screen.dart';
@@ -15,8 +18,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _tab = 0;
-  // 탭을 다시 열 때마다 새로 불러오도록 키를 바꾼다 (다른 탭에서 거래·관심 종목이 바뀌었을 수 있다)
+  // 다른 탭에서 거래·관심 종목 등이 바뀐 경우에만 키를 바꿔 다시 불러온다.
+  // 바뀐 게 없으면 탭을 오가도 화면과 스크롤 위치를 그대로 둔다.
   final _visits = [0, 0, 0, 0];
+  late final _seen = List.filled(4, context.read<AppState>().api.revision);
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +37,17 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
-        onDestinationSelected: (i) => setState(() {
-          if (i != _tab) _visits[i]++;
-          _tab = i;
-        }),
+        onDestinationSelected: (i) {
+          final revision = context.read<AppState>().api.revision;
+          setState(() {
+            _seen[_tab] = revision;
+            if (i != _tab && _seen[i] != revision) {
+              _visits[i]++;
+              _seen[i] = revision;
+            }
+            _tab = i;
+          });
+        },
         destinations: const [
           NavigationDestination(icon: Icon(Icons.pie_chart_outline), label: '포트폴리오'),
           NavigationDestination(icon: Icon(Icons.show_chart), label: '시장'),

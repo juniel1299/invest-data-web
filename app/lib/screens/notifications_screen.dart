@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models.dart';
 import '../state/app_state.dart';
 import '../widgets/trade_tile.dart';
+import '../widgets/load_error.dart';
 
 final _when = DateFormat('M/d HH:mm');
 
@@ -22,10 +23,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   void initState() {
     super.initState();
+    _load();
+  }
+
+  void _load() {
     final api = context.read<AppState>().api;
-    _future = api.notifications().then((r) async {
-      if (r.$1 > 0) await api.markNotificationsRead();
-      return r;
+    setState(() {
+      _future = api.notifications().then((r) async {
+        if (r.$1 > 0) await api.markNotificationsRead();
+        return r;
+      });
     });
   }
 
@@ -39,7 +46,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           if (snap.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snap.hasError) return Center(child: Text('불러오지 못했습니다: ${snap.error}'));
+          if (snap.hasError) return LoadError(error: snap.error!, onRetry: _load);
           final (_, items) = snap.data!;
           if (items.isEmpty) {
             return const Center(

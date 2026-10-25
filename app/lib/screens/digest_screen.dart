@@ -7,6 +7,7 @@ import '../format.dart';
 import '../models.dart';
 import '../state/app_state.dart';
 import '../widgets/trade_tile.dart';
+import '../widgets/load_error.dart';
 import 'security_screen.dart';
 
 final _dayLabel = DateFormat('M/d(E)', 'ko');
@@ -26,8 +27,12 @@ class _DigestListScreenState extends State<DigestListScreen> {
   @override
   void initState() {
     super.initState();
-    _future = context.read<AppState>().api.digests();
+    _load();
   }
+
+  void _load() => setState(() {
+        _future = context.read<AppState>().api.digests();
+      });
 
   String _subtitle(DigestBrief b) => [
         if (b.changePct != null) '내 포트폴리오 ${pct(b.changePct)}',
@@ -45,7 +50,7 @@ class _DigestListScreenState extends State<DigestListScreen> {
           if (snap.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snap.hasError) return Center(child: Text('불러오지 못했습니다: ${snap.error}'));
+          if (snap.hasError) return LoadError(error: snap.error!, onRetry: _load);
           final rows = snap.data!;
           if (rows.isEmpty) return const Center(child: Text('아직 요약이 없어요.'));
           return ListView.separated(
@@ -85,8 +90,12 @@ class _DigestScreenState extends State<DigestScreen> {
   @override
   void initState() {
     super.initState();
-    _future = context.read<AppState>().api.digest(widget.date);
+    _load();
   }
+
+  void _load() => setState(() {
+        _future = context.read<AppState>().api.digest(widget.date);
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +108,7 @@ class _DigestScreenState extends State<DigestScreen> {
           body: snap.connectionState != ConnectionState.done
               ? const Center(child: CircularProgressIndicator())
               : snap.hasError
-                  ? Center(child: Text('불러오지 못했습니다: ${snap.error}'))
+                  ? LoadError(error: snap.error!, onRetry: _load)
                   : _body(context, d!),
         );
       },
