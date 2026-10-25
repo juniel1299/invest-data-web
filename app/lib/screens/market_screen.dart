@@ -29,7 +29,9 @@ class _MarketScreenState extends State<MarketScreen> {
 
   void _load() {
     final api = context.read<AppState>().api;
-    setState(() => _future = (api.overview(), api.watches(), api.news()).wait);
+    setState(() {
+      _future = (api.overview(), api.watches(), api.news()).wait;
+    });
   }
 
   Future<void> _openSecurity(String ticker) async {

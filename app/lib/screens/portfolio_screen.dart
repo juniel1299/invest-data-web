@@ -24,7 +24,9 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     _load();
   }
 
-  void _load() => setState(() => _future = context.read<AppState>().api.summary());
+  void _load() => setState(() {
+        _future = context.read<AppState>().api.summary();
+      });
 
   Future<void> _open(Widget screen) async {
     final changed = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => screen));

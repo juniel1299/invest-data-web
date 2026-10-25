@@ -102,8 +102,9 @@ class _FeedState extends State<_Feed> with AutomaticKeepAliveClientMixin {
     _load();
   }
 
-  void _load() => setState(
-      () => _future = context.read<AppState>().api.tradeFeed(scope: _scope, kind: _kind));
+  void _load() => setState(() {
+        _future = context.read<AppState>().api.tradeFeed(scope: _scope, kind: _kind);
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -202,7 +203,9 @@ class _PeopleState extends State<_People> with AutomaticKeepAliveClientMixin {
     _load();
   }
 
-  void _load() => setState(() => _future = context.read<AppState>().api.people());
+  void _load() => setState(() {
+        _future = context.read<AppState>().api.people();
+      });
 
   Future<void> _toggle(PersonSummary p) async {
     final api = context.read<AppState>().api;
