@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../format.dart';
 import '../models.dart';
 import '../state/app_state.dart';
+import '../widgets/load_error.dart';
 import 'transaction_form_screen.dart';
 
 /// 한 종목의 거래 내역. 여기서 거래를 고치거나 지우면 보유 현황이 다시 계산된다.
@@ -82,7 +83,7 @@ class _HoldingScreenState extends State<HoldingScreen> {
             if (snap.connectionState != ConnectionState.done) {
               return const Center(child: CircularProgressIndicator());
             }
-            if (snap.hasError) return Center(child: Text('불러오지 못했습니다: ${snap.error}'));
+            if (snap.hasError) return LoadError(error: snap.error!, onRetry: _load);
             final items = snap.data!;
             return ListView(
               children: [

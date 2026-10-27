@@ -7,6 +7,7 @@ import '../state/app_state.dart';
 import '../widgets/news_tile.dart';
 import '../widgets/sparkline.dart';
 import '../widgets/ticker_field.dart';
+import '../widgets/load_error.dart';
 import 'security_screen.dart';
 
 /// 지수·금리·환율 요약, 종목 검색, 관심 종목, 내 종목 뉴스.
@@ -35,10 +36,12 @@ class _MarketScreenState extends State<MarketScreen> {
   }
 
   Future<void> _openSecurity(String ticker) async {
+    final api = context.read<AppState>().api;
+    final before = api.revision;
     await Navigator.push(
         context, MaterialPageRoute(builder: (_) => SecurityScreen(ticker: ticker)));
-    // 상세 화면에서 관심 종목을 바꿨을 수 있다
-    if (mounted) _load();
+    // 상세 화면에서 관심 종목이나 거래를 바꿨을 때만 다시 불러온다
+    if (mounted && api.revision != before) _load();
   }
 
   @override
@@ -71,7 +74,7 @@ class _MarketScreenState extends State<MarketScreen> {
             return Column(children: [searchBox, const Expanded(child: Center(child: CircularProgressIndicator()))]);
           }
           if (snap.hasError) {
-            return Column(children: [searchBox, Expanded(child: Center(child: Text('불러오지 못했습니다: ${snap.error}')))]);
+            return Column(children: [searchBox, Expanded(child: LoadError(error: snap.error!, onRetry: _load))]);
           }
           final (overview, watches, news) = snap.data!;
           final text = Theme.of(context).textTheme;

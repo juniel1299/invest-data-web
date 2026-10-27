@@ -26,6 +26,10 @@ class ApiClient {
   String? _refresh;
   void Function()? onUnauthorized;
 
+  /// 서버 데이터를 바꾼 요청(거래 저장, 관심 종목 등)이 성공할 때마다 1씩 오른다.
+  /// 탭 화면은 이 값이 바뀌었을 때만 다시 불러온다.
+  int revision = 0;
+
   bool get isLoggedIn => _refresh != null;
 
   Future<void> loadTokens() async {
@@ -175,7 +179,12 @@ class ApiClient {
     if (auth && _access != null) req.headers['Authorization'] = 'Bearer $_access';
     if (body != null) req.body = jsonEncode(body);
 
-    final res = await http.Response.fromStream(await _http.send(req));
+    final http.Response res;
+    try {
+      res = await http.Response.fromStream(await _http.send(req));
+    } on http.ClientException {
+      throw ApiException(0, '서버에 연결하지 못했어요. 백엔드가 켜져 있는지 확인해주세요.');
+    }
     if (res.statusCode == 401 && auth && !retried && await _refreshAccess()) {
       return _send(method, path, body: body, auth: auth, retried: true);
     }
@@ -184,8 +193,21 @@ class ApiClient {
       onUnauthorized?.call();
     }
     final text = utf8.decode(res.bodyBytes);
-    final decoded = text.isEmpty ? null : jsonDecode(text);
-    if (res.statusCode >= 400) throw ApiException(res.statusCode, _errorMessage(decoded));
+    Object? decoded;
+    try {
+      decoded = text.isEmpty ? null : jsonDecode(text);
+    } on FormatException {
+      // 500 오류 화면처럼 JSON이 아닌 응답
+      decoded = null;
+    }
+    if (res.statusCode >= 400) {
+      throw ApiException(
+          res.statusCode,
+          res.statusCode >= 500
+              ? '서버에서 오류가 났어요 (${res.statusCode}). 잠시 뒤 다시 시도해주세요.'
+              : _errorMessage(decoded));
+    }
+    if (method != 'GET' && auth) revision++;
     return decoded;
   }
 

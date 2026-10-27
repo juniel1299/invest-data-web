@@ -7,6 +7,7 @@ import '../format.dart';
 import '../models.dart';
 import '../state/app_state.dart';
 import '../widgets/trade_tile.dart';
+import '../widgets/load_error.dart';
 import 'security_screen.dart';
 
 /// 인물 상세: 최근 거래, 보유 추정 포트폴리오, 내 포트폴리오와 겹치는 정도, 공시 원문.
@@ -25,8 +26,12 @@ class _PersonScreenState extends State<PersonScreen> {
   @override
   void initState() {
     super.initState();
-    _future = context.read<AppState>().api.person(widget.slug);
+    _load();
   }
+
+  void _load() => setState(() {
+        _future = context.read<AppState>().api.person(widget.slug);
+      });
 
   Future<void> _toggle(PersonDetail p) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -53,7 +58,7 @@ class _PersonScreenState extends State<PersonScreen> {
           body: switch (snap) {
             AsyncSnapshot(connectionState: != ConnectionState.done) =>
               const Center(child: CircularProgressIndicator()),
-            AsyncSnapshot(:final error?) => Center(child: Text('불러오지 못했습니다: $error')),
+            AsyncSnapshot(:final error?) => LoadError(error: error, onRetry: _load),
             _ => _body(context, p!),
           },
         );
