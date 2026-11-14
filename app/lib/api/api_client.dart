@@ -18,7 +18,9 @@ class ApiException implements Exception {
 
 /// 백엔드 API. access 토큰이 만료되면 refresh 토큰으로 한 번 다시 시도한다.
 class ApiClient {
-  ApiClient({http.Client? client, this.baseUrl = apiBaseUrl}) : _http = client ?? http.Client();
+  ApiClient({http.Client? client, String? baseUrl})
+      : _http = client ?? http.Client(),
+        baseUrl = baseUrl ?? apiBaseUrl;
 
   final http.Client _http;
   final String baseUrl;

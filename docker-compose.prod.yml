@@ -1,0 +1,74 @@
+# 배포용 실행: docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+# 개발용 docker-compose.yml과 달리 gunicorn으로 돌고, Caddy가 Flutter 웹과 https를 맡는다.
+x-backend: &backend
+  build: ./backend
+  restart: unless-stopped
+  env_file: .env.prod
+  environment:
+    DEBUG: "False"
+    DATABASE_URL: postgres://invest:${POSTGRES_PASSWORD:?.env.prod에 POSTGRES_PASSWORD를 넣으세요}@db:5432/invest
+    REDIS_URL: redis://redis:6379/0
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: invest
+      POSTGRES_USER: invest
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?.env.prod에 POSTGRES_PASSWORD를 넣으세요}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U invest"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  web:
+    <<: *backend
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    <<: *backend
+    command: celery -A config worker -l info --concurrency 2
+    depends_on:
+      - web
+
+  beat:
+    <<: *backend
+    command: celery -A config beat -l info --schedule /data/celerybeat-schedule
+    volumes:
+      - beatdata:/data
+    depends_on:
+      - web
+
+  caddy:
+    build: ./app
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+    depends_on:
+      - web
+
+volumes:
+  pgdata:
+  beatdata:
+  caddydata:

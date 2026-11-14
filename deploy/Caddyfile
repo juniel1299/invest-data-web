@@ -1,0 +1,23 @@
+# SITE_ADDRESS
+#   도메인(예: invest.1-2-3-4.sslip.io) → Caddy가 Let's Encrypt https 인증서를 자동으로 받는다
+#   :80 → https는 앞단(Tailscale Funnel)이 처리할 때
+{
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+{$SITE_ADDRESS::80} {
+	encode zstd gzip
+
+	@backend path /api/* /admin /admin/* /static/*
+	handle @backend {
+		reverse_proxy web:8000
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
