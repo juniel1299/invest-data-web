@@ -37,6 +37,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -86,6 +87,15 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+# 관리자 화면의 CSS·JS는 gunicorn이 WhiteNoise로 직접 내보낸다
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        if not DEBUG
+        else "django.contrib.staticfiles.storage.StaticFilesStorage"
+    },
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -101,6 +111,14 @@ REST_FRAMEWORK = {
 # Flutter 웹(flutter run)은 매번 다른 포트에서 뜨므로 내 PC(localhost)에서 오는 호출은 항상 허용한다
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 CORS_ALLOWED_ORIGIN_REGEXES = [r"^http://(localhost|127\.0\.0\.1)(:\d+)?$"]
+
+# 배포: Caddy(또는 Tailscale Funnel)가 https를 처리하고 Django에는 http로 넘긴다.
+# 관리자 화면 로그인(CSRF)이 https 주소에서 되려면 그 주소를 믿을 출처로 넣어야 한다
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+if not DEBUG:
+    SESSION_COOKIE_SECURE = env.bool("SECURE_COOKIES", default=True)
+    CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
 
 # Celery: 미국 장 시간 기준으로 일정을 잡는다
 CELERY_BROKER_URL = env("REDIS_URL", default="redis://localhost:6379/0")

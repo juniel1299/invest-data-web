@@ -27,6 +27,11 @@ docker compose exec web python manage.py update_trades       # 13F·ARK·내부�
 - API: http://localhost:8000/api/health/
 - 관리자 화면: http://localhost:8000/admin/
 
+## 배포 (무료)
+
+다른 사람이 인터넷 주소로 들어올 수 있게 올리는 방법은 [deploy/README.md](deploy/README.md)에 있습니다.
+오라클 클라우드 무료 서버나 내 PC + Tailscale Funnel에 `docker-compose.prod.yml`로 띄웁니다.
+
 ## 실행 (Docker 없이)
 
 SQLite로 바로 돌려볼 수 있습니다. Celery 작업은 Redis가 있어야 동작합니다.
